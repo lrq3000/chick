@@ -66,7 +66,12 @@ const getOption = data => {
 };
 
 const documentCount = () => {
-  return Object.keys(localStorage).filter(x => x.startsWith('indexed:')).length;
+  return new Promise(resolve => {
+    chrome.storage.local.get(null, (items) => {
+      const count = Object.keys(items).filter(x => x.startsWith('indexed:')).length;
+      resolve(count);
+    });
+  });
 };
 
 const totalDocumentCount = () => {
@@ -78,49 +83,60 @@ const setDocumentCount = (count) => {
 };
 
 const setIndexedUrl = (url, words) => {
-  if (localStorage.getItem(`indexed:${url}`) !== null && isEmpty(words)) {
-    return;
-  }
-  localStorage.setItem(`indexed:${url}`, JSON.stringify({
-    words
-  }));
+  return new Promise(resolve => {
+    if (localStorage.getItem(`indexed:${url}`) !== null && isEmpty(words)) {
+      resolve();
+      return;
+    }
+    chrome.storage.local.set({ [`indexed:${url}`]: { words } }, () => {
+      resolve();
+    });
+  });
 };
 
 const getIndexedInfo = (url) => {
-  const result = localStorage.getItem(`indexed:${url}`);
-  if (result) {
-    return JSON.parse(result);
-  } else {
-    return {
-      words: []
-    }
-  }
+  return new Promise(resolve => {
+    chrome.storage.local.get([`indexed:${url}`], (result) => {
+      const data = result[`indexed:${url}`];
+      if (data) {
+        resolve(data);
+      } else {
+        resolve({
+          words: []
+        });
+      }
+    });
+  });
 };
 
 const indexedList = () => {
-  return Object.keys(localStorage).reduce((arr, key) => {
-      if (key.startsWith('indexed:')) {
-        const url = key.slice(8);
-        const words = getIndexedInfo(url);
-        arr.push({
-          label: uuid5(url, uuid5.URL),
-          words: words.words
-        });
-      }
-      return arr;
-    },
-    []);
+  return new Promise(resolve => {
+    chrome.storage.local.get(null, (items) => {
+      const indexedItems = Object.keys(items).reduce((arr, key) => {
+        if (key.startsWith('indexed:')) {
+          const url = key.slice(8);
+          const data = items[key];
+          arr.push({
+            label: uuid5(url, uuid5.URL),
+            words: data.words
+          });
+        }
+        return arr;
+      }, []);
+      resolve(indexedItems);
+    });
+  });
 };
 
-const hasIndex = (url) => {
-  return !!localStorage.getItem(`indexed:${url}`);
+const hasIndex = async (url) => {
+  const info = await getIndexedInfo(url);
+  return !!info && !!info.words;
 }
 
 const deleteIndexedStatus = () => {
-  Object.keys(localStorage).forEach(v => {
-    if (v.startsWith('indexed:')) {
-      localStorage.removeItem(v);
-    }
+  chrome.storage.local.get(null, (items) => {
+    const keysToRemove = Object.keys(items).filter(key => key.startsWith('indexed:'));
+    chrome.storage.local.remove(keysToRemove);
   });
 };
 

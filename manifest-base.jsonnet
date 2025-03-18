@@ -1,5 +1,5 @@
 {
-  manifest_version: 2,
+  manifest_version: 3,
   name: 'Chick',
   description: 'Full text bookmarks and browsing history search.',
   version: '0.0.35',
@@ -13,7 +13,6 @@
     'unlimitedStorage',
     'bookmarks',
     'history',
-    'identity',
     'notifications',
     '<all_urls>',
   ],
@@ -34,6 +33,10 @@
     default_title: 'Chick',
     default_popup: 'popup/index.html',
   },
+  background: {
+    service_worker: 'dist/background.js',
+    type: 'module'
+  },
   content_scripts: [{
     matches: [
       'https://www.google.com/*',
@@ -45,4 +48,8 @@
     js: ['dist/content.js'],
   }],
   options_page: 'option/index.html',
+  web_accessible_resources: [{
+    resources: ['img/logo.png'],
+    matches: ['<all_urls>'],
+  }],
 }

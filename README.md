@@ -38,6 +38,17 @@ after:2018-08-01
 #elm
 ```
 
+## Build
+
+```
+yarn install
+./build.sh
+```
+
+You must have a `elm` binary placed in `/node_modules/` at the root, they can be downloaded for all platforms including Windows [here](https://guide.elm-lang.org/install/elm.html).
+
+However the build fails on Windows.
+
 ## TODO
 
 * [ ] Improving search accuracy
